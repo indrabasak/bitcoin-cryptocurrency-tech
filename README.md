@@ -3,11 +3,16 @@
 [![Technical debt ratio][technical-debt-ratio-badge]][technical-debt-ratio-badge-url] 
 [![Coverage][coverage-badge]][coverage-badge-url]
 
+![](./img/coursera.svg) &nbsp;&nbsp;&nbsp;&nbsp; ![](./img/princeton.jpeg)
 
 Coursera Bitcoin and Cryptocurrency Technologies
 ===================================================
+This project's assignments relates to Bitcoin, cryptocurrencies, and blockchains.
+The assignments are part of Coursera's  **Bitcoin and Cryptocurrency Technologies**
+offered by Princeton University.
 
-
+### Assignment 1: ScroogeCoin
+![](./img/scrooge.jpg)
 
 [travis-badge]: https://travis-ci.org/indrabasak/bitcoin-cryptocurrency-tech.svg?branch=master
 [travis-badge-url]: https://travis-ci.org/indrabasak/bitcoin-cryptocurrency-tech/
