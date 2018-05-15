@@ -10,8 +10,9 @@
         <version>1.0.0</version>
     </parent>
     <groupId>com.basaki</groupId>
-    <artifactId>assignment1starterCode</artifactId>
-    <version>1.0-SNAPSHOT</version>
-    <name>assignment1starterCode</name>
+    <artifactId>assgnmt-1-scroogecoin</artifactId>
+    <version>1.0.0</version>
+    <name>Assignment 1 - Scrooge Coin</name>
+
 
 </project>

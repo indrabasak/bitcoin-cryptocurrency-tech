@@ -250,8 +250,5 @@ public class TxHandlerTest {
         Transaction[] validTxs = handler.handleTxs(possibleTxs);
         assertEquals(1, validTxs.length);
         assertEquals(tx3, validTxs[0]);
-
-        assertFalse(handler.contains(utxo1));
-        assertTrue(handler.contains(utxo2));
     }
 }

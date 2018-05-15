@@ -10,7 +10,8 @@
     <name>bitcoin-cryptocurrency-tech</name>
 
     <modules>
-        <module>assignment1starterCode</module>
+        <module>assgnmt-1-scroogecoin</module>
+        <module>assgnmt-1-grading</module>
     </modules>
 
     <properties>
