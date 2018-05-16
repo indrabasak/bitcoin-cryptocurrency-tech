@@ -16,10 +16,11 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author Indra Basak
  * @since 05/14/18
  */
-@SuppressWarnings({"squid:CommentedOutCodeLine", "squid:S1220"})
+@SuppressWarnings({"squid:CommentedOutCodeLine", "squid:S1220",
+        "squid:UnusedPrivateMethod", "squid:S3776"})
 public class MaxFeeTxHandler {
 
-    private static boolean LOG_ON = true;
+    private static final boolean LOG_ON = true;
 
     private UTXOPool utxoPool;
 
@@ -143,12 +144,8 @@ public class MaxFeeTxHandler {
             log("Transactions processed: ");
             if (isValidTx(tx, pool)) {
                 double fees = calculateFees(tx, pool);
-                Set<UTXO> inputUtxos = new HashSet<>();
-                for (Transaction.Input in : tx.getInputs()) {
-                    inputUtxos.add(new UTXO(in.prevTxHash, in.outputIndex));
-                }
                 TransactionWithFees txf =
-                        new TransactionWithFees(i, tx, fees, inputUtxos);
+                        new TransactionWithFees(i, tx, fees);
                 log(txf.toString());
                 txPosToFeesMap.put(i, txf);
             }
@@ -172,7 +169,7 @@ public class MaxFeeTxHandler {
             loop = processRejects(accepted, rejected, tempPool);
         }
 
-        if (accepted.size() > 0) {
+        if (!accepted.isEmpty()) {
             double totalFees =
                     accepted.stream().mapToDouble(t -> t.fees).sum();
             log("totalFees: " + totalFees, true);
@@ -241,15 +238,13 @@ public class MaxFeeTxHandler {
             List<TransactionWithFees> accepted,
             List<TransactionWithFees> rejected,
             UTXOPool pool) {
-
         List<TransactionWithFees> maybes = new CopyOnWriteArrayList<>();
         List<TransactionWithFees> shared = new CopyOnWriteArrayList<>();
         List<TransactionWithFees> rejectedShared = new CopyOnWriteArrayList<>();
 
         boolean success =
                 findSharedAndRejectedSiblings(transaction, accepted, rejected,
-                        pool,
-                        maybes, shared, rejectedShared);
+                        pool, maybes, shared, rejectedShared);
 
         while (success && !rejectedShared.isEmpty()) {
             TransactionWithFees txf = rejectedShared.remove(0);
@@ -258,10 +253,9 @@ public class MaxFeeTxHandler {
         }
 
         if (success) {
-            return processSharedAndAddIfNeeded(accepted, rejected, pool, maybes,
-                    shared);
+            return processSharedAndAddIfNeeded(accepted, rejected,
+                    pool, maybes, shared);
         }
-
 
         return false;
     }
@@ -324,17 +318,17 @@ public class MaxFeeTxHandler {
                 if (!found) {
                     for (TransactionWithFees rtxf : rejected) {
                         if (transaction.index != rtxf.index
-                                && !maybes.contains(rtxf)) {
-                            if (Arrays.equals(in.prevTxHash, rtxf.tx.getHash())
-                                    && in.outputIndex < rtxf.tx.numOutputs()) {
-                                log("in: " + getHash(in.prevTxHash) +
-                                        " - " + in.outputIndex +
-                                        " found dependency in " + rtxf.index);
-                                count++;
-                                found = true;
-                                if (!rejectedShared.contains(rtxf)) {
-                                    rejectedShared.add(rtxf);
-                                }
+                                && !maybes.contains(rtxf)
+                                && (Arrays.equals(in.prevTxHash,
+                                rtxf.tx.getHash())
+                                && in.outputIndex < rtxf.tx.numOutputs())) {
+                            log("in: " + getHash(in.prevTxHash) +
+                                    " - " + in.outputIndex +
+                                    " found dependency in " + rtxf.index);
+                            count++;
+                            found = true;
+                            if (!rejectedShared.contains(rtxf)) {
+                                rejectedShared.add(rtxf);
                             }
                         }
                     }
@@ -354,14 +348,10 @@ public class MaxFeeTxHandler {
         log("Found dependencies in rejected: " + txIndexToString(accepted));
 
         int after = shared.size();
-        if (count == transaction.tx.numInputs()) {
-            if (after == before) {
-                maybes.add(transaction);
-                return true;
-            } else if (!checkTransitiveDependencies(accepted, shared, pool)) {
-                maybes.add(transaction);
-                return true;
-            }
+        if (count == transaction.tx.numInputs() && (after == before ||
+                !checkTransitiveDependencies(accepted, shared, pool))) {
+            maybes.add(transaction);
+            return true;
         }
 
         return false;
@@ -460,17 +450,16 @@ public class MaxFeeTxHandler {
         double oldFees = 0;
         for (int t = shared.size() - 1; t >= 0; t--) {
             TransactionWithFees at = shared.get(t);
-
             at.spentUTXOs.entrySet().forEach(e ->
                     tempPool.addUTXO(e.getKey(), e.getValue()));
 
             for (int i = 0; i < at.tx.getOutputs().size(); i++) {
                 tempPool.removeUTXO(new UTXO(at.tx.getHash(), i));
             }
-
             oldFees += at.fees;
         }
 
+        // dry run for checking all 'maybes' are valid
         double fees = 0;
         for (int t = maybes.size() - 1; t >= 0; t--) {
             TransactionWithFees txf = maybes.get(t);
@@ -482,10 +471,35 @@ public class MaxFeeTxHandler {
             }
         }
 
+        // real run - add all 'maybes'
+        return addMaybes(accepted, rejected, pool, maybes, shared,
+                oldFees, fees);
+    }
+
+    /**
+     * Finally add maybes if neew fees are greater than old fees.
+     *
+     * @param accepted a list of already accepted transactions
+     * @param rejected a list of previoulsy rejected transactions
+     * @param pool     a pool of unspent transaction outputs
+     * @param maybes   a list of previously rejected transactions which are
+     *                 elligible for acceptance
+     * @param shared   a list of already accepted transactions which shares the
+     *                 same input transaction as a rejected transaction
+     * @param oldFees  total sum of old fees
+     * @param fees     total sum  of new fees
+     * @return true if the transactions in the 'maybes' bucket is added to the
+     * accepted bucket successfully, false otherwise
+     */
+    private boolean addMaybes(List<TransactionWithFees> accepted,
+            List<TransactionWithFees> rejected,
+            UTXOPool pool,
+            List<TransactionWithFees> maybes,
+            List<TransactionWithFees> shared,
+            double oldFees, double fees) {
         if (shared.isEmpty() || (fees > oldFees)) {
             for (int t = shared.size() - 1; t >= 0; t--) {
                 TransactionWithFees at = shared.get(t);
-
                 at.spentUTXOs.entrySet().forEach(e ->
                         pool.addUTXO(e.getKey(), e.getValue()));
 
@@ -606,23 +620,19 @@ public class MaxFeeTxHandler {
      * @since 05/14/18
      */
     private class TransactionWithFees {
-        public int index;
-        public Transaction tx;
+        private int index;
 
-        public double fees;
+        private Transaction tx;
 
-        public Set<UTXO> inputUtxos;
+        private double fees;
 
-        public Map<UTXO, Transaction.Output> spentUTXOs;
+        private Map<UTXO, Transaction.Output> spentUTXOs;
 
-        public TransactionWithFees(int index, Transaction tx, double fees,
-                Set<UTXO> inputUtxos) {
+        public TransactionWithFees(int index, Transaction tx, double fees) {
             this.index = index;
             this.tx = tx;
             this.fees = fees;
-            this.inputUtxos = inputUtxos;
         }
-
 
         @Override
         public int hashCode() {
@@ -642,11 +652,7 @@ public class MaxFeeTxHandler {
             }
 
             TransactionWithFees other = (TransactionWithFees) obj;
-            if (index == other.index) {
-                return true;
-            }
-
-            return false;
+            return (index == other.index) ? true : false;
         }
 
         @Override
