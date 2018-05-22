@@ -12,6 +12,7 @@
     <modules>
         <module>assgnmt-1-scroogecoin</module>
         <module>assgnmt-1-grading</module>
+        <module>assgnmt-2-consensus</module>
     </modules>
 
     <properties>
