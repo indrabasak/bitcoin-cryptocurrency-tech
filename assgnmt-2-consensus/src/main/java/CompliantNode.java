@@ -24,9 +24,13 @@ public class CompliantNode implements Node {
 
     private int numRounds;
 
+    private int round;
+
     private boolean[] followees;
 
     private boolean[] blackListed;
+
+    private Map<Integer, Boolean> followeesToBlacklistedMap;
 
     private Set<Transaction> pendingTransactions;
 
@@ -50,16 +54,21 @@ public class CompliantNode implements Node {
         this.p_malicious = p_malicious;
         this.p_txDistribution = p_txDistribution;
         this.numRounds = numRounds;
+
+        pendingTransactions = new HashSet<>();
         candidateToTransactionMap = new HashMap<>();
     }
 
     public void setFollowees(boolean[] followees) {
         this.followees = followees;
         blackListed = new boolean[followees.length];
+        for (int i = 0; i < followees.length; i++) {
+            followeesToBlacklistedMap.put(i, followees[i]);
+        }
     }
 
     public void setPendingTransaction(Set<Transaction> pendingTransactions) {
-        this.pendingTransactions = pendingTransactions;
+        this.pendingTransactions.addAll(pendingTransactions);
     }
 
     public Set<Transaction> sendToFollowers() {
@@ -70,6 +79,8 @@ public class CompliantNode implements Node {
     }
 
     public void receiveFromFollowees(Set<Candidate> candidates) {
+        round++;
+
         Set<Integer> senders =
                 candidates.stream().map(c -> c.sender).collect(toSet());
         for (int i = 0; i < followees.length; i++) {
