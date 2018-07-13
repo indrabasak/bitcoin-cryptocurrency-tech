@@ -1,4 +1,6 @@
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import static java.util.stream.Collectors.toSet;
@@ -10,15 +12,16 @@ import static java.util.stream.Collectors.toSet;
  * Score: 90/100
  * <p/>
  *
- * @since 05/19/18
+ * @since 05/28/18
  */
-public class CompliantNode1 implements Node {
+public class CompliantNode17 implements Node {
 
-    private double p_graph;
 
-    private double p_malicious;
+    private double pGraph;
 
-    private double p_txDistribution;
+    private double pMalicious;
+
+    private double pTxDistribution;
 
     private int numRounds;
 
@@ -28,7 +31,6 @@ public class CompliantNode1 implements Node {
 
     private Set<Transaction> pendingTransactions;
 
-    private Set<Candidate> candidates;
 
     /**
      * @param p_graph          the pairwise connectivity probability of the
@@ -37,17 +39,18 @@ public class CompliantNode1 implements Node {
      *                         malicious: e.g {.15, .30, .45}
      * @param p_txDistribution the probability that each of the initial valid
      *                         transactions will be communicated: e.g. {.01,
-     *                         .05,
-     *                         .10}
+     *                         .05, .10}
      * @param numRounds        the number of rounds in the simulation e.g. {10,
      *                         20}
      */
-    public CompliantNode1(double p_graph, double p_malicious,
-            double p_txDistribution, int numRounds) {
-        this.p_graph = p_graph;
-        this.p_malicious = p_malicious;
-        this.p_txDistribution = p_txDistribution;
+    public CompliantNode(double p_graph, double p_malicious,
+                         double p_txDistribution, int numRounds) {
+        this.pGraph = p_graph;
+        this.pMalicious = p_malicious;
+        this.pTxDistribution = p_txDistribution;
         this.numRounds = numRounds;
+
+        pendingTransactions = new HashSet<>();
     }
 
     public void setFollowees(boolean[] followees) {
@@ -56,7 +59,9 @@ public class CompliantNode1 implements Node {
     }
 
     public void setPendingTransaction(Set<Transaction> pendingTransactions) {
-        this.pendingTransactions = pendingTransactions;
+        if (!pendingTransactions.isEmpty()) {
+            this.pendingTransactions.addAll(pendingTransactions);
+        }
     }
 
     public Set<Transaction> sendToFollowers() {
@@ -67,7 +72,6 @@ public class CompliantNode1 implements Node {
     }
 
     public void receiveFromFollowees(Set<Candidate> candidates) {
-        this.candidates = candidates;
         Set<Integer> senders =
                 candidates.stream().map(c -> c.sender).collect(toSet());
         for (int i = 0; i < followees.length; i++) {
@@ -75,9 +79,19 @@ public class CompliantNode1 implements Node {
                 blackListed[i] = true;
         }
 
+        Map<Transaction, Set<Integer>> txToFolloweeMap = new HashMap<>();
         for (Candidate c : candidates) {
             if (!blackListed[c.sender]) {
-                pendingTransactions.add(c.tx);
+                if (!txToFolloweeMap.containsKey(c.tx)) {
+                    txToFolloweeMap.put(c.tx, new HashSet<>());
+                }
+
+                if (txToFolloweeMap.get(c.tx).contains(c.sender)) {
+                    blackListed[c.sender] = true;
+                } else {
+                    txToFolloweeMap.get(c.tx).add(c.sender);
+                    pendingTransactions.add(c.tx);
+                }
             }
         }
     }

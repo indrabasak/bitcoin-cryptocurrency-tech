@@ -2,6 +2,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toSet;
 
@@ -9,32 +10,36 @@ import static java.util.stream.Collectors.toSet;
  * {@code CompliantNode} refers to a node that follows the rules (not
  * malicious).
  * <p/>
- * Score: 95
+ * Score: 90/100
  * <p/>
  *
- * @since 05/20/18
+ * @since 05/28/18
  */
 public class CompliantNode implements Node {
 
-    private double p_graph;
 
-    private double p_malicious;
+    private double pGraph;
 
-    private double p_txDistribution;
+    private double pMalicious;
+
+    private double pTxDistribution;
 
     private int numRounds;
-
-    private int round;
 
     private boolean[] followees;
 
     private boolean[] blackListed;
 
-    private Map<Integer, Boolean> followeesToBlacklistedMap;
+    private int[] potentialMalicious;
 
     private Set<Transaction> pendingTransactions;
 
-    private Map<Integer, Set<Integer>> candidateToTransactionMap;
+    private Set<Transaction> initialPendingTransactions;
+
+    private int threshold;
+
+    private int round;
+
 
     /**
      * @param p_graph          the pairwise connectivity probability of the
@@ -43,67 +48,104 @@ public class CompliantNode implements Node {
      *                         malicious: e.g {.15, .30, .45}
      * @param p_txDistribution the probability that each of the initial valid
      *                         transactions will be communicated: e.g. {.01,
-     *                         .05,
-     *                         .10}
+     *                         .05, .10}
      * @param numRounds        the number of rounds in the simulation e.g. {10,
      *                         20}
      */
     public CompliantNode(double p_graph, double p_malicious,
-            double p_txDistribution, int numRounds) {
-        this.p_graph = p_graph;
-        this.p_malicious = p_malicious;
-        this.p_txDistribution = p_txDistribution;
+                         double p_txDistribution, int numRounds) {
+        this.pGraph = p_graph;
+        this.pMalicious = p_malicious;
+        this.pTxDistribution = p_txDistribution;
         this.numRounds = numRounds;
 
+        threshold = (int) p_malicious * numRounds;
+
         pendingTransactions = new HashSet<>();
-        candidateToTransactionMap = new HashMap<>();
+        initialPendingTransactions = new HashSet<>();
     }
 
     public void setFollowees(boolean[] followees) {
         this.followees = followees;
         blackListed = new boolean[followees.length];
-        for (int i = 0; i < followees.length; i++) {
-            followeesToBlacklistedMap.put(i, followees[i]);
-        }
+        potentialMalicious = new int[followees.length];
     }
 
     public void setPendingTransaction(Set<Transaction> pendingTransactions) {
-        this.pendingTransactions.addAll(pendingTransactions);
+        if (!pendingTransactions.isEmpty()) {
+            this.pendingTransactions.addAll(pendingTransactions);
+            this.initialPendingTransactions.addAll(pendingTransactions);
+        }
     }
 
     public Set<Transaction> sendToFollowers() {
-        Set<Transaction> sendTransactions = new HashSet<>(pendingTransactions);
-        pendingTransactions.clear();
+        System.out.println("----- sendToFollowers()");
+        Set<Transaction> sendTransactions;
+        if (round < 2) {
+            sendTransactions = new HashSet<>(initialPendingTransactions);
+        } else {
+            sendTransactions = new HashSet<>(pendingTransactions);
+            pendingTransactions.clear();
+        }
 
         return sendTransactions;
     }
 
     public void receiveFromFollowees(Set<Candidate> candidates) {
         round++;
+        System.out.println("----- receiveFromFollowees()");
 
-        Set<Integer> senders =
-                candidates.stream().map(c -> c.sender).collect(toSet());
-        for (int i = 0; i < followees.length; i++) {
-            if (followees[i] && !senders.contains(i))
-                blackListed[i] = true;
-        }
+        if (round == 1) {
+            Map<Integer, Set<Transaction>> followeeToTransactionMap
+                    = new HashMap<>();
 
-        for (Candidate c : candidates) {
-            if (!blackListed[c.sender]) {
-                //pendingTransactions.add(c.tx);
-                if (!candidateToTransactionMap.containsKey(c.sender)) {
-                    candidateToTransactionMap.put(c.sender, new HashSet<>());
+            for (Candidate c : candidates) {
+                if (!followeeToTransactionMap.containsKey(c)) {
+                    followeeToTransactionMap.put(c.sender, new HashSet<>());
                 }
 
-                Set<Integer> transactions =
-                        candidateToTransactionMap.get(c.sender);
-                if (transactions.contains(c.tx.id)) {
-                    blackListed[c.sender] = true;
-                    System.out.println("seen before: " + c.sender + " = " + c.tx.id);
-                } else {
+                followeeToTransactionMap.get(c.sender).add(c.tx);
+            }
+
+            for (int i = 0; i < followees.length; i++) {
+                if (followees[i]) {
+                    if (!followeeToTransactionMap.containsKey(i)) {
+                        System.out.println(" 1-------- blacklisted");
+                        blackListed[i] = true;
+                    } else {
+                        if (!followeeToTransactionMap.get(i).containsAll(initialPendingTransactions)) {
+                            System.out.println(" 2-------- blacklisted");
+                            blackListed[i] = true;
+                        }
+                    }
+                }
+            }
+        } else {
+            Set<Integer> senders =
+                    candidates.stream().map(c -> c.sender).collect(toSet());
+            for (int i = 0; i < followees.length; i++) {
+                if (followees[i] && !senders.contains(i)) {
+                    blackListed[i] = true;
+                }
+            }
+
+            Map<Transaction, Set<Integer>> txToFolloweeMap = new HashMap<>();
+            for (Candidate c : candidates) {
+                if (!blackListed[c.sender]) {
                     pendingTransactions.add(c.tx);
-                    transactions.add(c.tx.id);
-                    System.out.println("not seen before: " + c.sender + " = " + c.tx.id);
+//                    if (!txToFolloweeMap.containsKey(c.tx)) {
+//                        txToFolloweeMap.put(c.tx, new HashSet<>());
+//                    }
+//
+//                    if (txToFolloweeMap.get(c.tx).contains(c.sender)) {
+//                        potentialMalicious[c.sender]++;
+//                        if (potentialMalicious[c.sender] > threshold) {
+//                            blackListed[c.sender] = true;
+//                        }
+//                    } else {
+//                        txToFolloweeMap.get(c.tx).add(c.sender);
+//                        pendingTransactions.add(c.tx);
+//                    }
                 }
             }
         }

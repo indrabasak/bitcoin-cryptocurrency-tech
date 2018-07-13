@@ -1,10 +1,11 @@
+import org.junit.Test;
+
 import java.math.BigInteger;
 import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.Signature;
 import java.util.Base64;
-import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 

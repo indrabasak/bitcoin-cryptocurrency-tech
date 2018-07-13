@@ -1,34 +1,32 @@
 import java.util.HashSet;
 import java.util.Set;
 
-import static java.util.stream.Collectors.toSet;
-
 /**
  * {@code CompliantNode} refers to a node that follows the rules (not
  * malicious).
  * <p/>
- * Score: 90/100
+ * Score: 81/100
  * <p/>
  *
- * @since 05/19/18
+ * @since 05/28/18
  */
-public class CompliantNode1 implements Node {
+public class CompliantNode8 implements Node {
 
-    private double p_graph;
+    private double pGraph;
 
-    private double p_malicious;
+    private double pMalicious;
 
-    private double p_txDistribution;
+    private double pTxDistribution;
 
     private int numRounds;
 
-    private boolean[] followees;
+    private int round;
 
-    private boolean[] blackListed;
+    private boolean[] followees;
 
     private Set<Transaction> pendingTransactions;
 
-    private Set<Candidate> candidates;
+    private Set<Transaction> allValidTransactions;
 
     /**
      * @param p_graph          the pairwise connectivity probability of the
@@ -37,47 +35,52 @@ public class CompliantNode1 implements Node {
      *                         malicious: e.g {.15, .30, .45}
      * @param p_txDistribution the probability that each of the initial valid
      *                         transactions will be communicated: e.g. {.01,
-     *                         .05,
-     *                         .10}
+     *                         .05, .10}
      * @param numRounds        the number of rounds in the simulation e.g. {10,
      *                         20}
      */
-    public CompliantNode1(double p_graph, double p_malicious,
-            double p_txDistribution, int numRounds) {
-        this.p_graph = p_graph;
-        this.p_malicious = p_malicious;
-        this.p_txDistribution = p_txDistribution;
+    public CompliantNode(double p_graph, double p_malicious,
+                         double p_txDistribution, int numRounds) {
+        this.pGraph = p_graph;
+        this.pMalicious = p_malicious;
+        this.pTxDistribution = p_txDistribution;
         this.numRounds = numRounds;
+
+        pendingTransactions = new HashSet<>();
+        allValidTransactions = new HashSet<>();
     }
 
     public void setFollowees(boolean[] followees) {
         this.followees = followees;
-        blackListed = new boolean[followees.length];
     }
 
     public void setPendingTransaction(Set<Transaction> pendingTransactions) {
-        this.pendingTransactions = pendingTransactions;
+        if (!pendingTransactions.isEmpty()) {
+            this.pendingTransactions.addAll(pendingTransactions);
+            this.allValidTransactions.addAll(pendingTransactions);
+        }
     }
 
     public Set<Transaction> sendToFollowers() {
-        Set<Transaction> sendTransactions = new HashSet<>(pendingTransactions);
-        pendingTransactions.clear();
+        Set<Transaction> sendTransactions;
+        if (round < numRounds) {
+            sendTransactions = new HashSet<>(pendingTransactions);
+            pendingTransactions.clear();
+        } else {
+            sendTransactions = new HashSet<>(allValidTransactions);
+        }
 
         return sendTransactions;
     }
 
     public void receiveFromFollowees(Set<Candidate> candidates) {
-        this.candidates = candidates;
-        Set<Integer> senders =
-                candidates.stream().map(c -> c.sender).collect(toSet());
-        for (int i = 0; i < followees.length; i++) {
-            if (followees[i] && !senders.contains(i))
-                blackListed[i] = true;
-        }
+        round++;
 
+        // shortlist transactions sent from a followee
         for (Candidate c : candidates) {
-            if (!blackListed[c.sender]) {
+            if (followees[c.sender]) {
                 pendingTransactions.add(c.tx);
+                allValidTransactions.add(c.tx);
             }
         }
     }

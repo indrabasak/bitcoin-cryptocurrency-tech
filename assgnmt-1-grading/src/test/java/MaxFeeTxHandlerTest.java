@@ -1,7 +1,8 @@
+import org.junit.Test;
+
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
-import org.junit.Test;
 
 /**
  * {@code MaxFeeTxHandlerTest} test class for {@code MaxFeeTxHandler}.
@@ -35,7 +36,7 @@ public class MaxFeeTxHandlerTest {
 
     // all transactions are simple and valid
     private int test1(
-            UTXOPool uPool) throws FileNotFoundException, IOException {
+            UTXOPool uPool) throws IOException {
         System.out.println(
                 "Test 1: test handleTransactions() with simple and valid transactions");
 
@@ -80,7 +81,7 @@ public class MaxFeeTxHandlerTest {
     }
 
     private boolean verify(Transaction[] allTxs1, Transaction[] allTxs2,
-            UTXOPool uPool) {
+                           UTXOPool uPool) {
         Transaction[] copyTxs1 = new Transaction[allTxs1.length];
         for (int i = 0; i < copyTxs1.length; i++)
             copyTxs1[i] = allTxs1[i];
@@ -111,7 +112,7 @@ public class MaxFeeTxHandlerTest {
     }
 
     private boolean verify(Transaction[] allTxs1, Transaction[] allTxs2,
-            Transaction[] allTxs3, UTXOPool uPool) {
+                           Transaction[] allTxs3, UTXOPool uPool) {
         Transaction[] copyTxs1 = new Transaction[allTxs1.length];
         for (int i = 0; i < copyTxs1.length; i++)
             copyTxs1[i] = allTxs1[i];
@@ -155,8 +156,8 @@ public class MaxFeeTxHandlerTest {
     }
 
     private boolean verifyPoolUpdate(Transaction[] allTxs1,
-            Transaction[] allTxs2,
-            Transaction[] allTxs3, UTXOPool uPool) {
+                                     Transaction[] allTxs2,
+                                     Transaction[] allTxs3, UTXOPool uPool) {
         Transaction[] copyTxs1 = new Transaction[allTxs1.length];
         for (int i = 0; i < copyTxs1.length; i++)
             copyTxs1[i] = allTxs1[i];

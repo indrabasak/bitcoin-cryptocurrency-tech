@@ -1,9 +1,4 @@
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.MessageDigest;
-import java.security.PrivateKey;
-import java.security.SecureRandom;
-import java.security.Signature;
+import java.security.*;
 
 /**
  * {@code TestUtil} is helper class for Java crypto.

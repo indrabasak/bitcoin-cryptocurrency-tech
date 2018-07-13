@@ -1,9 +1,8 @@
-import java.security.KeyPair;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import java.security.KeyPair;
+
+import static org.junit.Assert.*;
 
 /**
  * {@code TxHandlerTest} represents an unit test for {@code TxHandler}.
