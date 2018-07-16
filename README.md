@@ -14,6 +14,12 @@ offered by Princeton University.
 ### Assignment 1: ScroogeCoin
 ![](./img/scrooge.jpg)
 
+### Assignment 2: Consensus
+![](./img/scrooge.jpg)
+
+### Assignment 3: BlockChain
+![](./img/blockchain.jpg)
+
 [travis-badge]: https://travis-ci.org/indrabasak/bitcoin-cryptocurrency-tech.svg?branch=master
 [travis-badge-url]: https://travis-ci.org/indrabasak/bitcoin-cryptocurrency-tech/
 
