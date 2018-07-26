@@ -3,55 +3,51 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import static java.util.stream.Collectors.toSet;
+
 /**
  * {@code CompliantNode} refers to a node that follows the rules (not
  * malicious).
  * <p/>
- * Score: 100/100
+ * Score: 96/100
  * <p/>
  * Tests for this assignment involve your submitted miner competing with a number of different types of malicious miners
- * <p>
+ *
  * Running test with parameters: numNodes = 100, p_graph = 0.1, p_malicious = 0.3, p_txDistribution = 0.01, numRounds = 10
- * On average 72 out of 72 of nodes reach consensus
- * <p>
+ * On average 69 out of 72 of nodes reach consensus
+ *
  * Running test with parameters: numNodes = 100, p_graph = 0.1, p_malicious = 0.3, p_txDistribution = 0.05, numRounds = 10
  * On average 72 out of 72 of nodes reach consensus
- * <p>
+ *
  * Running test with parameters: numNodes = 100, p_graph = 0.1, p_malicious = 0.45, p_txDistribution = 0.01, numRounds = 10
- * On average 58 out of 58 of nodes reach consensus
- * <p>
+ * On average 52 out of 58 of nodes reach consensus
+ *
  * Running test with parameters: numNodes = 100, p_graph = 0.1, p_malicious = 0.45, p_txDistribution = 0.05, numRounds = 10
- * On average 58 out of 58 of nodes reach consensus
- * <p>
+ * On average 52 out of 58 of nodes reach consensus
+ *
  * Running test with parameters: numNodes = 100, p_graph = 0.2, p_malicious = 0.3, p_txDistribution = 0.01, numRounds = 10
  * On average 76 out of 76 of nodes reach consensus
- * <p>
+ *
  * Running test with parameters: numNodes = 100, p_graph = 0.2, p_malicious = 0.3, p_txDistribution = 0.05, numRounds = 10
- * On average 76 out of 76 of nodes reach consensus
- * <p>
+ * On average 75 out of 76 of nodes reach consensus
+ *
  * Running test with parameters: numNodes = 100, p_graph = 0.2, p_malicious = 0.45, p_txDistribution = 0.01, numRounds = 10
- * On average 54 out of 54 of nodes reach consensus
- * <p>
+ * On average 45 out of 54 of nodes reach consensus
+ *
  * Running test with parameters: numNodes = 100, p_graph = 0.2, p_malicious = 0.45, p_txDistribution = 0.05, numRounds = 10
- * On average 54 out of 54 of nodes reach consensus
+ * On average 51 out of 54 of nodes reach consensus
  *
  * @since 07/25/18
  */
-public class CompliantNode implements Node {
+public class CompliantNode34 implements Node {
 
-    private static final int NUM_OF_TRUST_ROUNDS = 2;
+    private int numRounds;
 
     private boolean[] followees;
 
     private boolean[] blackListed;
 
-    private int[] followeesScore;
-
-    private Set<Transaction> originalProposals;
-
     private Set<Transaction> pendingTransactions;
-
-    private Transaction markerTxn;
 
     private int round;
 
@@ -69,44 +65,23 @@ public class CompliantNode implements Node {
      */
     public CompliantNode(double p_graph, double p_malicious,
                          double p_txDistribution, int numRounds) {
-        originalProposals = new HashSet<>();
+        this.numRounds = numRounds;
         pendingTransactions = new HashSet<>();
     }
 
     public void setFollowees(boolean[] followees) {
         this.followees = followees;
         blackListed = new boolean[followees.length];
-        followeesScore = new int[followees.length];
     }
 
     public void setPendingTransaction(Set<Transaction> pendingTransactions) {
-        originalProposals.clear();
         if (!pendingTransactions.isEmpty()) {
-            originalProposals.addAll(pendingTransactions);
             this.pendingTransactions.addAll(pendingTransactions);
-            Transaction[] txns = originalProposals.toArray(new Transaction[0]);
-            if (txns.length > 0) {
-                markerTxn = txns[0];
-            }
         }
     }
 
     public Set<Transaction> sendToFollowers() {
-        Set<Transaction> sendTransactions = new HashSet<>();
-        if (round > NUM_OF_TRUST_ROUNDS) {
-            sendTransactions.addAll(pendingTransactions);
-            if (!originalProposals.isEmpty()) {
-                sendTransactions.addAll(originalProposals);
-                originalProposals.clear();
-            }
-        } else {
-            // create trust by sending only 1 transaction as long
-            // as the round is less than equal to the number of trusted rounds
-            if (markerTxn != null) {
-                sendTransactions.add(markerTxn);
-            }
-        }
-
+        Set<Transaction> sendTransactions = new HashSet<>(pendingTransactions);
         pendingTransactions.clear();
 
         return sendTransactions;
@@ -115,45 +90,44 @@ public class CompliantNode implements Node {
     public void receiveFromFollowees(Set<Candidate> candidates) {
         round++;
 
-        Map<Integer, Set<Transaction>> senderToTxMap = new HashMap<>();
+//        Set<Integer> senders =
+//                candidates.stream().map(c -> c.sender).collect(toSet());
+//        for (int i = 0; i < followees.length; i++) {
+//            // 1. be functionally dead and never actually
+//            // broadcast any transactions
+//            if (followees[i] && !senders.contains(i)) {
+//                blackListed[i] = true;
+//            }
+//        }
+
+        Map<Transaction, Integer> txnFrequencyMap = new HashMap<>();
+        Set<Integer> followeesSet = new HashSet<>();
         for (Candidate c : candidates) {
             if (followees[c.sender] && !blackListed[c.sender]) {
-                if (!senderToTxMap.containsKey(c.sender)) {
-                    senderToTxMap.put(c.sender, new HashSet<>());
-                }
+                followeesSet.add(c.sender);
 
-                senderToTxMap.get(c.sender).add(c.tx);
-            }
-        }
-
-        // if the round is less than equal to the number of trusted rounds
-        // and the followee sends ony one transaction increment
-        // the followees' score count
-        // it's secret handshake
-        if (round <= NUM_OF_TRUST_ROUNDS) {
-            for (int i = 0; i < followees.length; i++) {
-                if (followees[i]) {
-                    if (senderToTxMap.containsKey(i)) {
-                        Set<Transaction> txns = senderToTxMap.get(i);
-                        if (txns.size() == 1) {
-                            followeesScore[i]++;
-                        }
-                    }
+                if (!txnFrequencyMap.containsKey(c.tx)) {
+                    txnFrequencyMap.put(c.tx, 1);
+                } else {
+                    int count = txnFrequencyMap.get(c.tx);
+                    txnFrequencyMap.put(c.tx, count + 1);
                 }
             }
         }
 
-        // if the present round is greater number of trusted rounds
-        // only consider the transactions from followees
-        // who have a followee score count equal to number of trusted rounds
-        if (round > NUM_OF_TRUST_ROUNDS) {
-            for (int i = 0; i < followees.length; i++) {
-                if (followees[i] && followeesScore[i] == NUM_OF_TRUST_ROUNDS) {
-                    if (senderToTxMap.containsKey(i)) {
-                        pendingTransactions.addAll(senderToTxMap.get(i));
-                    }
+        if (round < numRounds - 2) {
+            txnFrequencyMap.forEach((tx, count) -> {
+                pendingTransactions.add(tx);
+
+            });
+        } else {
+            final int fCount = followeesSet.size();
+            txnFrequencyMap.forEach((tx, count) -> {
+                if (count > 0.2 * fCount) {
+                    pendingTransactions.add(tx);
                 }
-            }
+
+            });
         }
     }
 }

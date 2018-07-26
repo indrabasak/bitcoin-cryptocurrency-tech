@@ -37,7 +37,7 @@ import java.util.Set;
  *
  * @since 07/25/18
  */
-public class CompliantNode implements Node {
+public class CompliantNode38 implements Node {
 
     private static final int NUM_OF_TRUST_ROUNDS = 2;
 
