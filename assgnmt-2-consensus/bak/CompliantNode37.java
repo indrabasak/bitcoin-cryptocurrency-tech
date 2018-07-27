@@ -130,13 +130,13 @@ public class CompliantNode37 implements Node {
             }
         }
 
-        // 96/100 if txn count > threshold (0.2 * number of followees) for last 1 round
-        // 97/100 if txn count > threshold (0.2 * number of followees) for last 2 rounds
-        // 97/100 if txn count >= threshold (0.2 * number of followees) for last 2 rounds
-        // 97/100 if txn count > threshold (malicious * number of followees) for last 2 rounds
-        // 95/100 if txn count > threshold (number of followees - 1)/5for last 2 rounds
-        // 95/100 if txn count >= threshold (number of followees - 1)/5for last 2 rounds
-        // 95/100 if txn count > threshold (0.3 * number of followees)/5for last 2 rounds
+        // 96/100 if txn count > threshold (0.2 * number of followees) for the last 1 round
+        // 97/100 if txn count > threshold (0.2 * number of followees) for the last 2 rounds
+        // 97/100 if txn count >= threshold (0.2 * number of followees) for the last 2 rounds
+        // 97/100 if txn count > threshold (malicious * number of followees) for the last 2 rounds
+        // 95/100 if txn count > threshold (number of followees - 1)/5 for the last 2 rounds
+        // 95/100 if txn count >= threshold (number of followees - 1)/5 for the last 2 rounds
+        // 95/100 if txn count > threshold (0.3 * number of followees) for the last 2 rounds
 
         double threshold = followeesSet.size() * 0.2;
 

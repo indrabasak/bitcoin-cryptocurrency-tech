@@ -43,11 +43,7 @@ public class CompliantNode implements Node {
 
     private boolean[] followees;
 
-    private boolean[] blackListed;
-
     private int[] followeesScore;
-
-    private Set<Transaction> originalProposals;
 
     private Set<Transaction> pendingTransactions;
 
@@ -69,22 +65,19 @@ public class CompliantNode implements Node {
      */
     public CompliantNode(double p_graph, double p_malicious,
                          double p_txDistribution, int numRounds) {
-        originalProposals = new HashSet<>();
         pendingTransactions = new HashSet<>();
     }
 
     public void setFollowees(boolean[] followees) {
         this.followees = followees;
-        blackListed = new boolean[followees.length];
         followeesScore = new int[followees.length];
     }
 
     public void setPendingTransaction(Set<Transaction> pendingTransactions) {
-        originalProposals.clear();
         if (!pendingTransactions.isEmpty()) {
-            originalProposals.addAll(pendingTransactions);
+            this.pendingTransactions.clear();
             this.pendingTransactions.addAll(pendingTransactions);
-            Transaction[] txns = originalProposals.toArray(new Transaction[0]);
+            Transaction[] txns = pendingTransactions.toArray(new Transaction[0]);
             if (txns.length > 0) {
                 markerTxn = txns[0];
             }
@@ -95,10 +88,7 @@ public class CompliantNode implements Node {
         Set<Transaction> sendTransactions = new HashSet<>();
         if (round > NUM_OF_TRUST_ROUNDS) {
             sendTransactions.addAll(pendingTransactions);
-            if (!originalProposals.isEmpty()) {
-                sendTransactions.addAll(originalProposals);
-                originalProposals.clear();
-            }
+            pendingTransactions.clear();
         } else {
             // create trust by sending only 1 transaction as long
             // as the round is less than equal to the number of trusted rounds
@@ -106,8 +96,6 @@ public class CompliantNode implements Node {
                 sendTransactions.add(markerTxn);
             }
         }
-
-        pendingTransactions.clear();
 
         return sendTransactions;
     }
@@ -117,7 +105,7 @@ public class CompliantNode implements Node {
 
         Map<Integer, Set<Transaction>> senderToTxMap = new HashMap<>();
         for (Candidate c : candidates) {
-            if (followees[c.sender] && !blackListed[c.sender]) {
+            if (followees[c.sender]) {
                 if (!senderToTxMap.containsKey(c.sender)) {
                     senderToTxMap.put(c.sender, new HashSet<>());
                 }
@@ -127,8 +115,8 @@ public class CompliantNode implements Node {
         }
 
         // if the round is less than equal to the number of trusted rounds
-        // and the followee sends ony one transaction increment
-        // the followees' score count
+        // and the followee sends ony one transaction, increment
+        // the followees' score count by one.
         // it's secret handshake
         if (round <= NUM_OF_TRUST_ROUNDS) {
             for (int i = 0; i < followees.length; i++) {
@@ -143,9 +131,9 @@ public class CompliantNode implements Node {
             }
         }
 
-        // if the present round is greater number of trusted rounds
-        // only consider the transactions from followees
-        // who have a followee score count equal to number of trusted rounds
+        // if the present round is greater than the number of trusted rounds,
+        // consider the transactions from followees who have a followee
+        // score count equal to the number of trusted rounds
         if (round > NUM_OF_TRUST_ROUNDS) {
             for (int i = 0; i < followees.length; i++) {
                 if (followees[i] && followeesScore[i] == NUM_OF_TRUST_ROUNDS) {

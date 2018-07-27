@@ -14,8 +14,8 @@ offered by Princeton University.
 ### Assignment 1: ScroogeCoin
 ![](./img/scrooge.jpg)
 
-### Assignment 2: Consensus
-![](./img/scrooge.jpg)
+### Assignment 2: Consensus of Trust
+![](./img/consensus.jpg)
 
 ### Assignment 3: BlockChain
 ![](./img/blockchain.jpg)

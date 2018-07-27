@@ -3,8 +3,8 @@
 Assignment 3: Blockchain
 ===================================
 
-In `BlockChain` assignment implements a node that’s part of a block-chain-based distributed consensus protocol. 
-The block chain maintains an updated chain as it receives incoming transactions and blocks.
+The requirements of `BlockChain` assignment is to implement a node that’s part of a block-chain-based distributed 
+consensus protocol. The block chain maintains an updated chain as it receives incoming transactions and blocks.
 
 Points to remember:
   * A new genesis block won’t be mined. If a genesis block (parent is a null hash) is received `​addBlock` method, 
@@ -24,7 +24,7 @@ Points to remember:
   
   * No proof-of-work check is needed.
 
-## List of classes:
+## List of Classes:
 
 ### Block
 Stores the block data structure.
