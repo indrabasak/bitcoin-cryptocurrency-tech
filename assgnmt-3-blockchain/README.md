@@ -24,7 +24,7 @@ Points to remember:
   
   * No proof-of-work check is needed.
 
-## List of Classes:
+## List of Classes
 
 |  Class                  | Function                                                                                        |
 |-------------------------|-------------------------------------------------------------------------------------------------|
