@@ -20,6 +20,9 @@ offered by Princeton University.
 ### Assignment 3: BlockChain
 ![](./img/blockchain.jpg)
 
+### Grade
+![](./img/final-grade.png)
+
 [travis-badge]: https://travis-ci.org/indrabasak/bitcoin-cryptocurrency-tech.svg?branch=master
 [travis-badge-url]: https://travis-ci.org/indrabasak/bitcoin-cryptocurrency-tech/
 
