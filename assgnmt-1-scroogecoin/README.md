@@ -17,7 +17,7 @@ Points to remember:
   * Among the transactions received by Scrooge in a single block, more than 
   one transaction may spend the same output. This is `double-spend` and hence 
   invalid. 
-  * Transactions can’t be validated in isolation..
+  * Transactions can’t be validated in isolation.
 
 ### Transaction Class
 It represents a ScroogeCoin transaction and has inner classes `Transaction.Output` 
@@ -33,14 +33,14 @@ the corresponding output, the index of this output in that transaction
 
 For the input to be valid, the signature it contains must be a valid signature 
 over the current transaction with the public key in the spent output. The
-raw data, which is to be signed, is obtained from the `​getRawDataToSign`​ method.
+raw data to be signed is obtained from the `getRawDataToSign` method.
 
 ### Crypto Class
 To verify a signature, the `verifySignature` method of `Crypto` class is used.
 
 ### UTXO Class
 A `UTXO` class represents an **unspent transaction output**. An UTXO contains 
-the hash of the transaction from which it originates and as well the index 
+the hash of the transaction from which it originates and as well as the index 
 within that transaction. 
 
 ### UTXOPool Class
